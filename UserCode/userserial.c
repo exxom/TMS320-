@@ -7,6 +7,9 @@
 
 #include <userserial.h>
 
+Uint16 len; // Used for checking the received data
+char rdata[BUFFER_SIZE];
+
 void UART_GPIO_init(uint32_t base)
 {
     if (base == SCIA_BASE)
@@ -49,13 +52,16 @@ void UART_init(uint32_t base, uint32_t baud)
    #endif
 }
 
-
+//This function is for sending data using SCI communication
+//##########################################################
 void Send_Serial(uint32_t base, const uint16_t *data, uint16_t length)
 {
     SCI_writeCharArray(base, data, length);
     SCI_writeCharArray(base, (uint16_t*) "\r\n", 2);
 }
 
+//This function is for reading data using SCI communication with polling protocol
+//################################################################################
 int Recive_Serial(uint32_t base, uint16_t *data)
 {
     uint16_t rxStatus = 0U;
@@ -73,4 +79,19 @@ int Recive_Serial(uint32_t base, uint16_t *data)
         *data = SCI_readCharBlockingFIFO(base);
         return 1;
     }
+}
+
+//This function is for reading data using SCI communication with interrupt protocol
+//##################################################################################
+__interrupt void scicRxISR(void)
+{
+
+    rdata[len] = ScicRegs.SCIRXBUF.all;
+    len++;
+
+    if (len >= BUFFER_SIZE)
+        len = 0;
+
+    PieCtrlRegs.PIEACK.all |= 0x100;       // Issue PIE ack
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);
 }

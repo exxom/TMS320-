@@ -20,19 +20,16 @@
 #include "userserial.h"
 #include "usertimer.h"
 
-#define BUFFER_SIZE 128
-Uint16 len; // Used for checking the received data
-char rdata[BUFFER_SIZE];
+//#define BUFFER_SIZE 128
+extern Uint16 len; // Used for checking the received data
+extern char rdata[BUFFER_SIZE];
 
 uint8_t ledG, ledR;
 
 #define ON 1
 #define OFF 0
 
-__interrupt void scicRxISR(void);
-__interrupt void cpuTimer0ISR(void);
-
-uint16_t timer;
+extern uint16_t timer;
 
 void main(void)
 {
@@ -41,32 +38,31 @@ void main(void)
 
     DINT;
 
-    UART_GPIO_init(SCIC_BASE);
-    UART_init(SCIC_BASE, 9600);
+    UART_GPIO_init(SCIC_BASE);//Initialize Rx and Tx SCIC pins
+    UART_init(SCIC_BASE, 9600);//Initialize SCIC by 9600 buadrate
 
     Interrupt_initModule();
     Interrupt_initVectorTable();
     IER = 0x0000;
     IFR = 0x0000;
 
-    Interrupt_register(INT_SCIC_RX, scicRxISR);
+    Interrupt_register(INT_SCIC_RX, scicRxISR);//Introducing Rx interrupt function
+    Interrupt_enable(INT_SCIC_RX);//enable SCIC Rx interrupt
 
-    Interrupt_enable(INT_SCIC_RX);
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);//clear SCIC Rx interrupt group
 
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);
+    Interrupt_register(INT_TIMER0, &cpuTimer0ISR);//Introducing Timer interrupt function
+    CPU_Timers_Init(CPUTIMER0_BASE);//Initialize Timer0
+    CPU_Timers_Config(CPUTIMER0_BASE, DEVICE_SYSCLK_FREQ, 200000);//Configuration Timer0 with 200ms tick
+    Interrupt_enable(INT_TIMER0);//Enable Timer0 interrupt
 
-    Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
-    CPU_Timers_Init(CPUTIMER0_BASE);
-    CPU_Timers_Config(CPUTIMER0_BASE, DEVICE_SYSCLK_FREQ, 200000);
-    Interrupt_enable(INT_TIMER0);
-
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);//Clear Timer interrupt group
 
     GPIO_init_Pin();
 
     EINT;
 
-    CPUTimer_startTimer(CPUTIMER0_BASE);
+    CPUTimer_startTimer(CPUTIMER0_BASE);//Start timer tick
 
     while (1)
     {
@@ -117,25 +113,5 @@ void main(void)
         }
     }
 
-}
-
-__interrupt void scicRxISR(void)
-{
-
-    rdata[len] = ScicRegs.SCIRXBUF.all;
-    len++;
-
-    if (len >= BUFFER_SIZE)
-        len = 0;
-
-    PieCtrlRegs.PIEACK.all |= 0x100;       // Issue PIE ack
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);
-}
-
-__interrupt void cpuTimer0ISR(void)
-{
-    timer++;
-
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
 }
 

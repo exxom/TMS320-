@@ -7,6 +7,8 @@
 
 #include "usertimer.h"
 
+uint16_t timer;
+
 void CPU_Timers_Init(uint32_t timerbase)
 {
     CPUTimer_setPeriod(timerbase, 0xFFFFFFFF);
@@ -27,4 +29,12 @@ void CPU_Timers_Config(uint32_t cpuTimer, float freq, float period)
     CPUTimer_setEmulationMode(cpuTimer,
                               CPUTIMER_EMULATIONMODE_STOPAFTERNEXTDECREMENT);
     CPUTimer_enableInterrupt(cpuTimer);
+}
+
+
+__interrupt void cpuTimer0ISR(void)
+{
+    timer++;
+
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
 }
