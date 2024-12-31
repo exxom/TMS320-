@@ -1,0 +1,11 @@
+"./F2837xD_GlobalVariableDefs.obj"
+"./main.obj"
+"./Drivers/F2837xD_CodeStartBranch.obj"
+"./Drivers/device.obj"
+"./UserCode/usergpio.obj"
+"./UserCode/userserial.obj"
+"./UserCode/usertimer.obj"
+"../2837x_FLASH_lnk_cpu1.cmd"
+"C:/ti/c2000/C2000Ware_5_04_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib"
+-llibc.a
+-l"C:/ti/c2000/C2000Ware_5_04_00_00/device_support/f2837xd/headers/cmd/F2837xD_Headers_nonBIOS_cpu1.cmd"
